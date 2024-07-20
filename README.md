@@ -19,7 +19,13 @@
     ```bash
     cd choosewinner
     ```
-3.  **Установите зависимости:**
+3. **Для установки nvm выполните следующие шаги:**
+    1)Откройте терминал.
+    2)Вставьте и выполните следующую команду:
+    ```bash
+   curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.4/install.sh | bash
+    ```
+4.  **Установите зависимости:**
     ```bash
     npm install
     ```
