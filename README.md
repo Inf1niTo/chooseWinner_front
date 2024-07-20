@@ -22,8 +22,6 @@
 3.  **Установите зависимости:**
     ```bash
     npm install
-    pip install -r requirements.txt
-    
     ```
 
 
