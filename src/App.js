@@ -29,9 +29,6 @@ function App() {
   const handleToggleWinners = (showCurrent) => {
     setShowCurrentWinners(showCurrent);
   };
-    axios.defaults.baseURL = 'http://localhost:5001';  // URL вашего Flask сервера
-    axios.defaults.headers.common['Content-Type'] = 'application/json';
-    axios.defaults.headers.common['Access-Control-Allow-Origin'] = '*';
 
   useEffect(() => {
     noise();
