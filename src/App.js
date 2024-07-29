@@ -4,6 +4,9 @@ import UploadForm from './components/UploadForm';
 import WinnersList from './components/WinnersList';
 import ErrorAlert from './components/ErrorAlert';
 import './App.css';
+import API_BASE_URL from './config';
+
+axios.defaults.baseURL = API_BASE_URL;
 
 function App() {
   const [winners, setWinners] = useState([]);
@@ -20,7 +23,6 @@ function App() {
 
   const fileInputRef = useRef(null);
   const drawNumberInputRef = useRef(null);
-
 
   const [showCurrentWinners, setShowCurrentWinners] = useState(true);
 
@@ -100,7 +102,6 @@ function App() {
       }, false);
     };
 
-
     const init = (() => {
       canvas = document.getElementById('noise');
       ctx = canvas.getContext('2d');
@@ -109,51 +110,51 @@ function App() {
     })();
   };
 
-const handleUpload = async (file, numWinners, drawNumber, drawCategory) => {
+  const handleUpload = async (file, numWinners, drawNumber, drawCategory) => {
     setIsLoading(true);
     setError(null);
     try {
-        const formData = new FormData();
-        formData.append('file', file);
+      const formData = new FormData();
+      formData.append('file', file);
 
-        await axios.post('/api/upload', formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data',
-            },
+      await axios.post('/api/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      const response = await axios.post('/api/calculate_winners', {
+        num_winners: numWinners,
+        draw_number: drawNumber,
+        draw_category: drawCategory,
+      });
+
+      if (response.data.message) {
+        const allWinnersResponse = await axios.get(`/api/winners/all/${drawNumber}`);
+        setAllWinners(allWinnersResponse.data);
+
+        const winnersResponse = await axios.get(`/api/winners/${drawNumber}?count=${numWinners}`);
+        setWinners(winnersResponse.data);
+        setTotalParticipants(response.data.total_participants);
+
+        setDrawData({
+          course: response.data.course,
+          step: response.data.step,
+          totalParticipants: response.data.total_participants,
+          drawNumber: drawNumber,
+          drawDate: new Date().toLocaleDateString(),
         });
 
-        const response = await axios.post('/api/calculate_winners', {
-            num_winners: numWinners,
-            draw_number: drawNumber,
-            draw_category: drawCategory,
-        });
-
-        if (response.data.message) {
-            const allWinnersResponse = await axios.get(`/api/winners/all/${drawNumber}`);
-            setAllWinners(allWinnersResponse.data);
-
-            const winnersResponse = await axios.get(`/api/winners/${drawNumber}?count=${numWinners}`);
-            setWinners(winnersResponse.data);
-            setTotalParticipants(response.data.total_participants);
-
-            setDrawData({
-                course: response.data.course,
-                step: response.data.step,
-                totalParticipants: response.data.total_participants,
-                drawNumber: drawNumber,
-                drawDate: new Date().toLocaleDateString(),
-            });
-
-            setShowButtons(true);
-        } else {
-            setError(response.data.error);
-        }
+        setShowButtons(true);
+      } else {
+        setError(response.data.error);
+      }
     } catch (error) {
-        setError('Ошибка при обращении к API');
+      setError('Ошибка при обращении к API');
     } finally {
-        setIsLoading(false);
+      setIsLoading(false);
     }
-};
+  };
 
   const handleNewDraw = () => {
     setFile(null);
@@ -174,39 +175,39 @@ const handleUpload = async (file, numWinners, drawNumber, drawCategory) => {
     }
   };
 
-const handleDownloadReport = () => {
-  if (drawData) {
-    // --- Формирование данных для отчета ---
-    const reportData = {
-      Sheet1: [
-        { Название: 'Курс', Значение: drawData.course },
-        { Название: 'Шаг выбора', Значение: drawData.step },
-        { Название: 'Всего участников', Значение: drawData.totalParticipants },
-      ],
-      'Текущие победители': winners,
-      'Все победители': allWinners,
-    };
+  const handleDownloadReport = () => {
+    if (drawData) {
+      // --- Формирование данных для отчета ---
+      const reportData = {
+        Sheet1: [
+          { Название: 'Курс', Значение: drawData.course },
+          { Название: 'Шаг выбора', Значение: drawData.step },
+          { Название: 'Всего участников', Значение: drawData.totalParticipants },
+        ],
+        'Текущие победители': winners,
+        'Все победители': allWinners,
+      };
 
-    // --- Отправка данных на сервер для создания Excel ---
-    axios.post('/api/generate_report', reportData, {
-      responseType: 'blob', // Ожидаем ответ в виде двоичных данных
-    })
-    .then(response => {
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `Отчет_${drawData.drawDate}_${drawData.drawNumber}.xlsx`);
-      document.body.appendChild(link);
-      link.click();
-    })
-    .catch(error => {
-      setError('Ошибка при создании отчета');
-      console.error(error);
-    });
-  }
-};
+      // --- Отправка данных на сервер для создания Excel ---
+      axios.post('/api/generate_report', reportData, {
+        responseType: 'blob', // Ожидаем ответ в виде двоичных данных
+      })
+      .then(response => {
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `Отчет_${drawData.drawDate}_${drawData.drawNumber}.xlsx`);
+        document.body.appendChild(link);
+        link.click();
+      })
+      .catch(error => {
+        setError('Ошибка при создании отчета');
+        console.error(error);
+      });
+    }
+  };
 
-return (
+  return (
     <div className="app-wrapper">
       <canvas ref={noiseCanvasRef} id="noise" className="noise"></canvas>
       <div className="balls">
@@ -234,7 +235,6 @@ return (
         {totalParticipants > 0 && (
           <div className="participant-info">
             <p style={{ marginBottom: '10px' }}>Участников: {totalParticipants};  Выбрано победителей: {winners.length}</p>
-
           </div>
         )}
 
